@@ -1,0 +1,21 @@
+---
+{% if rke2_token is defined %}
+token: {{ rke2_token }}
+{% endif %}
+{% if rke2_role == 'server' %}
+tls-san: {{ rke2_api_fqdn }}
+disable-cloud-controller: true
+{% if rke2_disable_components is defined %}
+disable: {{ rke2_disable_components }}
+{% endif %}
+{% if rke2_local_storage_path is defined %}
+default-local-storage-path: {{ rke2_local_storage_path }}
+{% endif %}
+{% if groups.agents is defined and groups.agents | length > 0 %}
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+{% endif %}
+{% endif %}
+{% if rke2_role == 'agent' %}
+server: https://{{ rke2_api_fqdn }}:{{ rke2_api_port }}
+{% endif %}

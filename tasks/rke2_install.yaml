@@ -1,0 +1,98 @@
+---
+- block:
+
+  - name: Determine current installed version, if any
+    command: /usr/local/bin/rke2 --version
+    register: rke2_version_output
+    changed_when: false 
+    failed_when: false
+
+  - name: Create rke2 assets dir
+    file:
+      path: "/opt/rke2/{{ rke2_version_plain }}"
+      state: directory
+      owner: root
+      group: root 
+      mode: 0755 
+
+  - name: Download rke2 checksums
+    get_url:
+      url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/sha256sum-amd64.txt"
+      dest: "/opt/rke2/{{ rke2_version_plain }}"
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Read rke2 checksums
+    register: checksums 
+    slurp:
+      src: "/opt/rke2/{{ rke2_version_plain }}/sha256sum-amd64.txt"
+  - debug: var=checksums
+
+  - name: Register rke2 binary checksum
+    set_fact: 
+      rke2_bin_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2.linux-amd64$') | join() | split(' ') | first }}"
+  - debug: var=rke2_bin_checksum
+
+  - name: Register rke2 images checksum
+    set_fact: 
+      rke2_images_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2-images.linux-amd64.tar.zst$') | join() | split(' ') | first }}"
+  - debug: var=rke2_images_checksum
+
+  - name: Download rke2 images
+    get_url:
+      url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/rke2-images.linux-amd64.tar.zst"
+      dest: "/opt/rke2/{{ rke2_version_plain }}"
+      owner: root
+      group: root 
+      mode: 0644
+      checksum: "sha256:{{ rke2_images_checksum }}"
+    register: images_archive 
+
+  - name: Download rke2 binary
+    get_url:
+      url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/rke2.linux-amd64"
+      dest: "/opt/rke2/{{ rke2_version_plain }}/rke2"
+      owner: root
+      group: root 
+      mode: 0755
+      checksum: "sha256:{{ rke2_bin_checksum }}"
+    register: binary_file
+
+  - name: Ensure rke2 images dir exists
+    file:
+      path: "{{ rke2_images_dir }}"
+      state: directory
+      owner: root 
+      group: root 
+      mode: 0755 
+
+  - name: Move images archive to images dir  
+    copy: 
+      src: "{{ images_archive.dest }}"
+      dest: "{{ rke2_images_dir }}/"
+      owner: root 
+      group: root 
+      mode: 0644
+      remote_src: true 
+    when: rke2_version_output.rc != 0
+
+  - name: Move rke2 binary to /usr/local/bin   
+    copy: 
+      src: "{{ binary_file.dest }}"
+      dest: "{{ rke2_bin_dir }}/rke2" 
+      owner: root 
+      group: root 
+      mode: 0755 
+      remote_src: true
+    when: rke2_version_output.rc != 0
+
+  - name: Install rke2 service file 
+    template:
+      src: rke2.service.j2
+      dest: "{{ rke2_systemd_dir }}/rke2-{{ rke2_role }}.service" 
+      owner: root
+      group: root 
+      mode: 0644
+  become: true 
+  tags: upgrade

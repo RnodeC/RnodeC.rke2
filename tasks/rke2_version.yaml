@@ -1,0 +1,25 @@
+---
+- block:
+  - name: Establish rke2 version
+    uri: 
+      url: https://update.rke2.io/v1-release/channels
+    register: msg
+
+  - set_fact:
+      latest_rke2_version: "{{ msg.json.data | json_query(query) }}"
+    vars: 
+      query: "[? name==`{{ rke2_channel }}`].latest"
+
+  - debug: >
+      msg="Latest available version in rke2_channel {{ rke2_channel }} is: {{ latest_rke2_version[0] }}"
+
+  - set_fact: 
+      rke2_version: "{{ latest_rke2_version[0] }}"
+    when: rke2_version is undefined
+
+  - debug: >
+      msg="We are installing: {{ rke2_version }}"
+
+  - set_fact: 
+      rke2_version_plain: "{{ rke2_version | replace('+', '') }}"
+  tags: upgrade

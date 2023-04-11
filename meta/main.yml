@@ -1,0 +1,12 @@
+galaxy_info:
+  role_name: rke2
+  author: RnodeC
+  description: deploy rke2 cluster.  linux amd64 only. 
+  license: "license (BSD, MIT)"
+
+  min_ansible_version: "2.13"
+  galaxy_tags: 
+  - rke2 
+  - kubernetes
+
+dependencies: []

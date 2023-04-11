@@ -1,0 +1,29 @@
+---
+- block:
+  - name: Create rke2 config dir
+    file:
+      path: /etc/rancher/rke2
+      state: directory
+      owner: root
+      group: root 
+      mode: 0755 
+
+  - name: Create rke2 config.yaml file 
+    template:
+      src: config.yaml.j2 
+      dest: /etc/rancher/rke2/config.yaml 
+      owner: root 
+      group: root 
+      mode: 0644
+
+  - name: Add rke2 audit-policy.yaml file
+    copy:
+      src: audit-policy.yaml
+      dest: /etc/rancher/rke2/audit-policy.yaml
+      owner: root 
+      group: root 
+      mode: 0644
+    when: rke2_role == 'server'
+
+  become: true 
+  tags: upgrade

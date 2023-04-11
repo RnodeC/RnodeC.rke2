@@ -1,0 +1,48 @@
+---
+- name: OS specific config 
+  include_tasks: "{{ ansible_os_family | lower }}.yaml"
+  tags: os 
+  
+- name: Common config 
+  include_tasks: common.yaml 
+
+- name: Default rke2_role to server if not provided
+  set_fact: 
+    rke2_role: server
+  when: rke2_role is not defined
+  tags: upgrade 
+
+- name: Establish rke2 version 
+  include_tasks: rke2_version.yaml 
+  tags: upgrade 
+
+- name: Setup rke2 config files 
+  include_tasks: rke2_config_files.yaml
+  tags: upgrade 
+  
+- name: Install rke2
+  include_tasks: rke2_install.yaml 
+  tags: upgrade
+
+- name: Start rke2 service 
+  systemd:
+    name: "rke2-{{ rke2_role }}"
+    state: started
+    enabled: true
+  become: true
+
+- name: Wait for rke2 service to be ready
+  shell: "{{ rke2_bin_dir }}/rke2 kubectl get nodes | grep {{ ansible_hostname }}"
+  args: 
+    executable: /bin/bash
+  changed_when: false 
+  register: node_ready
+  until: '" Ready " in node_ready.stdout'
+  retries: 10
+  delay: 30
+  become: true
+  when: rke2_role is not defined or rke2_role == 'server'
+
+- name: Trigger rolling restart (if an upgrade)
+  include_tasks: rke2_restart.yaml 
+  tags: upgrade 
