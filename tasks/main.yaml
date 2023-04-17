@@ -1,22 +1,17 @@
 ---
-- name: OS specific config 
-  include_tasks: "{{ ansible_os_family | lower }}.yaml"
-  tags: os 
+- name: Set Defaults  
+  include_tasks: rke2_defaults.yaml
+  tags: 'upgrade' 
+
+- name: OS Config 
+  include_tasks: "os/{{ ansible_os_family | lower }}.yaml"
+  tags: ['upgrade', 'os'] 
   
-- name: Common config 
-  include_tasks: common.yaml 
-
-- name: Default rke2_role to server if not provided
-  set_fact: 
-    rke2_role: server
-  when: rke2_role is not defined
-  tags: upgrade 
-
-- name: Establish rke2 version 
+- name: Establish rke2 Version 
   include_tasks: rke2_version.yaml 
   tags: upgrade 
 
-- name: Setup rke2 config files 
+- name: Setup rke2 Config Files 
   include_tasks: rke2_config_files.yaml
   tags: upgrade 
   
@@ -24,15 +19,19 @@
   include_tasks: rke2_install.yaml 
   tags: upgrade
 
-- name: Start rke2 service 
+- name: Start rke2 Service 
   systemd:
     name: "rke2-{{ rke2_role }}"
     state: started
     enabled: true
   become: true
 
-- name: Wait for rke2 service to be ready
-  shell: "{{ rke2_bin_dir }}/rke2 kubectl get nodes | grep {{ ansible_hostname }}"
+- name: Trigger Rolling Restart (if an upgrade)
+  include_tasks: rke2_restart.yaml 
+  tags: ['never', 'upgrade']
+
+- name: Wait For rke2 Service
+  shell: "/var/lib/rancher/rke2/bin/kubectl --kubeconfig {{ rke2_server_kubeconfig }} get nodes | grep {{ ansible_hostname }}"
   args: 
     executable: /bin/bash
   changed_when: false 
@@ -41,8 +40,15 @@
   retries: 10
   delay: 30
   become: true
-  when: rke2_role is not defined or rke2_role == 'server'
-
-- name: Trigger rolling restart (if an upgrade)
-  include_tasks: rke2_restart.yaml 
+  when: rke2_role == 'server'
   tags: upgrade 
+
+- name: Add local-path-provisioner Manifest
+  template: 
+    src: "local-path-provisioner.yaml.j2"
+    dest: "{{ rke2_manifests_dir }}"
+    owner: root 
+    group: root 
+    mode: 0644
+  become: true
+  when: rke2_local_storage and rke2_role == 'server'

@@ -1,0 +1,10 @@
+---
+- name: SELinux
+  include_tasks: redhat/selinux.yaml
+  when: rke2_selinux
+  tags: ['upgrade', 'os']
+
+- name: Apply all common tasks
+  include_tasks: "{{ item }}"
+  with_fileglob:
+    - "common/*.yaml"

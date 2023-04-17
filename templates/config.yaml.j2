@@ -1,9 +1,11 @@
 ---
-{% if rke2_token is defined %}
+server: https://{{ rke2_api_ip }}:{{ rke2_registration_port }}
 token: {{ rke2_token }}
+{% if rke2_selinux %}
+selinux: true 
 {% endif %}
 {% if rke2_role == 'server' %}
-tls-san: {{ rke2_api_fqdn }}
+tls-san: {{ rke2_api_fqdn }},{{ rke2_api_ip }}
 disable-cloud-controller: true
 {% if rke2_disable_components is defined %}
 disable: {{ rke2_disable_components }}
@@ -15,7 +17,4 @@ default-local-storage-path: {{ rke2_local_storage_path }}
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
 {% endif %}
-{% endif %}
-{% if rke2_role == 'agent' %}
-server: https://{{ rke2_api_fqdn }}:{{ rke2_api_port }}
 {% endif %}

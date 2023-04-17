@@ -1,0 +1,30 @@
+---
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  schedule:
+    - cron: '35 5 * * 0'
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        MOLECULE_DISTRO:
+          - centos7
+          - rockylinux8
+          - rockylinux9
+          - ubuntu2204
+          - ubuntu2004
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          path: "${{ github.repository }}"
+
+      - name: molecule
+        uses: robertdebock/molecule-action@5.0.1
+        env:
+          MOLECULE_DISTRO: ${{ matrix.MOLECULE_DISTRO }}

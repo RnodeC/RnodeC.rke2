@@ -1,0 +1,16 @@
+---
+- block:
+  - name: Collect services fact
+    ansible.builtin.service_facts:
+
+  - name: Load rke2-canal.conf into /etc/NetworkManager/conf.d
+    ansible.builtin.copy: 
+      src: os/rke2-canal.conf
+      dest: /etc/NetworkManager/conf.d/rke2-canal.conf
+      owner: root 
+      group: root 
+      mode: 0644
+    notify: restart NetworkManager 
+    when: "'NetworkManager.service' in services and services['NetworkManager.service'].state == 'running'"
+  become: true
+  tags: ['upgrade', 'os']

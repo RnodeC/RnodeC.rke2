@@ -1,0 +1,20 @@
+---
+- name: reboot
+  ansible.builtin.reboot:
+    msg: "Reboot initiated by Ansible"
+    reboot_timeout: 600
+    test_command: uptime
+    pre_reboot_delay: 10
+  become: true
+
+- name: restart NetworkManager
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+  become: true
+
+- name: restart systemd-sysctl
+  ansible.builtin.systemd:
+    name: systemd-sysctl
+    state: restarted
+  become: true
