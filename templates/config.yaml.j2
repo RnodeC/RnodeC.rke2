@@ -10,9 +10,6 @@ disable-cloud-controller: true
 {% if rke2_disable_components is defined %}
 disable: {{ rke2_disable_components }}
 {% endif %}
-{% if rke2_local_storage_path is defined %}
-default-local-storage-path: {{ rke2_local_storage_path }}
-{% endif %}
 {% if groups.agents is defined and groups.agents | length > 0 %}
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
