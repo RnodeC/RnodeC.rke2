@@ -1,0 +1,56 @@
+---
+- name: Add local-rke2.env file to server root homedir, for any local debugging
+  ansible.builtin.copy: 
+    src: local-rke2.env
+    dest: /root/local-rke2.env
+    owner: root 
+    group: root 
+    mode: 0700
+  become: true 
+
+### NetworkManager ###
+- block:
+  - name: Collect services fact
+    ansible.builtin.service_facts:
+
+  - name: Write rke2-canal.conf into /etc/NetworkManager/conf.d
+    ansible.builtin.copy: 
+      src: os/rke2-canal.conf
+      dest: /etc/NetworkManager/conf.d/rke2-canal.conf
+      owner: root 
+      group: root 
+      mode: 0644
+    notify: restart NetworkManager 
+    when: "'NetworkManager.service' in services and services['NetworkManager.service'].state == 'running'"
+  become: true
+
+### selinux (rhel only) ###
+- block:
+  - name: Install container-selinux package 
+    ansible.builtin.package: 
+      name: container-selinux
+      state: latest
+
+  - name: Download rke2's selinux rpm
+    ansible.builtin.get_url:
+      url: "https://github.com/rancher/rke2-selinux/releases/download/{{ rke2_selinux_release }}/{{ rke2_selinux_version }}.el{{ ansible_distribution_major_version }}.noarch.rpm"
+      dest: /tmp/selinux.rpm
+
+  - name: Import rancher's gpg public key
+    ansible.builtin.rpm_key:
+      key: https://rpm.rancher.io/public.key
+      state: present
+    
+  - name: Install rke2 selinux rpm (rhel 7)
+    ansible.builtin.yum:
+      name: /tmp/selinux.rpm
+      state: present
+    when: ansible_distribution_major_version == '7'
+
+  - name: Install rke2 selinux rpm (rhel 8)
+    ansible.builtin.dnf:
+      name: /tmp/selinux.rpm
+      state: present
+    when: ansible_distribution_major_version == '8'
+  become: true 
+  when: ansible_os_family | lower == "redhat"

@@ -1,0 +1,10 @@
+---
+- name: Install
+  hosts: all
+  gather_facts: true
+
+  vars: 
+    rke2_channel: 'v1.23'
+
+  roles:
+  - RnodeC.rke2

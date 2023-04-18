@@ -1,9 +1,9 @@
 ---
+{% if inventory_hostname != groups.servers.0 -%}
 server: https://{{ rke2_api_ip }}:{{ rke2_registration_port }}
-token: {{ rke2_token }}
-{% if rke2_selinux %}
-selinux: true 
 {% endif %}
+token: {{ rke2_token }}
+selinux: {{ rke2_selinux }} 
 {% if rke2_role == 'server' %}
 tls-san: {{ rke2_api_fqdn }},{{ rke2_api_ip }}
 disable-cloud-controller: true

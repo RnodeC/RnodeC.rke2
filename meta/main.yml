@@ -1,6 +1,6 @@
 galaxy_info:
   role_name: rke2
-  author: RnodeC
+  author: rnodec
   description: deploy rke2 cluster.  linux amd64 only. 
   license: "license (BSD, MIT)"
 

@@ -1,54 +1,10 @@
 ---
-- name: Set Defaults  
-  include_tasks: rke2_defaults.yaml
-  tags: 'upgrade' 
+- name: Include common tasks
+  include_tasks: common.yaml
+  when: action in ['upgrade', 'install']
 
-- name: OS Config 
-  include_tasks: "os/{{ ansible_os_family | lower }}.yaml"
-  tags: ['upgrade', 'os'] 
-  
-- name: Establish rke2 Version 
-  include_tasks: rke2_version.yaml 
-  tags: upgrade 
+# can add install.yaml and/or upgrade.yaml file if there is ever a need to
 
-- name: Setup rke2 Config Files 
-  include_tasks: rke2_config_files.yaml
-  tags: upgrade 
-  
-- name: Install rke2
-  include_tasks: rke2_install.yaml 
-  tags: upgrade
-
-- name: Start rke2 Service 
-  systemd:
-    name: "rke2-{{ rke2_role }}"
-    state: started
-    enabled: true
-  become: true
-
-- name: Trigger Rolling Restart (if an upgrade)
-  include_tasks: rke2_restart.yaml 
-  tags: ['never', 'upgrade']
-
-- name: Wait For rke2 Service
-  shell: "/var/lib/rancher/rke2/bin/kubectl --kubeconfig {{ rke2_server_kubeconfig }} get nodes | grep {{ ansible_hostname }}"
-  args: 
-    executable: /bin/bash
-  changed_when: false 
-  register: node_ready
-  until: '" Ready " in node_ready.stdout'
-  retries: 10
-  delay: 30
-  become: true
-  when: rke2_role == 'server'
-  tags: upgrade 
-
-- name: Add local-path-provisioner Manifest
-  template: 
-    src: "local-path-provisioner.yaml.j2"
-    dest: "{{ rke2_manifests_dir }}"
-    owner: root 
-    group: root 
-    mode: 0644
-  become: true
-  when: rke2_local_storage and rke2_role == 'server'
+- name: Include teardown tasks
+  include_tasks: teardown.yaml
+  when: action == 'teardown'

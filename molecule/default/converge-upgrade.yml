@@ -1,0 +1,11 @@
+---
+- name: Upgrade
+  hosts: all
+  gather_facts: true
+
+  vars:
+    rke2_channel: 'v1.24'
+    action: upgrade 
+
+  roles:
+  - RnodeC.rke2

@@ -18,3 +18,15 @@
     name: systemd-sysctl
     state: restarted
   become: true
+
+- name: selinux restorecon
+  ansible.builtin.command:
+    argv:
+    - restorecon
+    - -R
+    - /var/lib
+    - /var/lib/rancher
+    - /etc/rancher
+    - /usr/local/bin
+  become: true 
+  when: ansible_os_family | lower == "redhat"

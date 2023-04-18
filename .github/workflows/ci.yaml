@@ -7,24 +7,40 @@ on:
   schedule:
     - cron: '35 5 * * 0'
 
+env:
+  VAGRANT_VERSION: '2.3.4'
+
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         MOLECULE_DISTRO:
-          - centos7
-          - rockylinux8
-          - rockylinux9
-          - ubuntu2204
-          - ubuntu2004
+          - ubuntu/jammy64
+          - rockylinux/8
+          - centos/7
     steps:
-      - name: checkout
+      - name: Check out the codebase
         uses: actions/checkout@v3
-        with:
-          path: "${{ github.repository }}"
 
-      - name: molecule
-        uses: robertdebock/molecule-action@5.0.1
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install test dependencies
+        run: |
+          pip3 install ansible molecule molecule-vagrant
+          sudo apt-get update
+          sudo apt-get install -y virtualbox
+          curl -LO vagrant.deb https://releases.hashicorp.com/vagrant/${{ env.VAGRANT_VERSION }}/vagrant_${{ env.VAGRANT_VERSION }}_x86_64.deb
+          sudo apt install -y ./vagrant.deb
+          vagrant --version
+          vboxmanage --version
+
+      - name: Run Molecule tests
+        run: molecule test
         env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
           MOLECULE_DISTRO: ${{ matrix.MOLECULE_DISTRO }}

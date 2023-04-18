@@ -25,4 +25,3 @@
 
   - debug: >
       msg="We are installing: {{ rke2_version }}.  rke2_version_plain={{ rke2_version_plain }}"
-  tags: upgrade

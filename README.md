@@ -6,23 +6,28 @@ This role will deploy rke2.  (linux amd64 only)
 Requirements
 ------------
 
-At least a single vm.  The `rke2_role: server|agent` host or group var determines how the node gets deployed.  
+At least a single vm.   
 
 Role Variables
 --------------
 
-No variables are required for this role.  See `defaults/main.yaml` for full list of available variables and their default values.  Here are a few that you might likely want to apply:
+The `rke2_role: server|agent` host or group var determines how the node gets deployed. So these should be configured in inventory or group_vars of your playbook.  Defaults to server. 
+
+No other variables are required for this role.  See `defaults/main.yaml` for full list of available variables and their default values.  Here are a few that you might likely want to apply:
 
 ```
 rke2_channel: stable
 rke2_token: badsecret 
-rke2_api_hostname: server
-rke2_api_domain: local
+rke2_api_ip: 192.168.1.200
+rke2_api_fqdn: rke2.local
 ```
+
 
 #### rke2_channel 
 
 This variable can be "stable", "latest", "testing", or a valid kubernetes major/minor version (i.e. "v1.24").  The ansible role will pull down the latest available rke2 version that corresponds to the channel.  
+
+Alternatively, you can use an explicit rke2_version, such as `rke2_version: v1.23.17+rke2r1`
 
 Dependencies
 ------------

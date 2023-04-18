@@ -1,16 +1,4 @@
 ---
-- name: Determine current installed version, if any
-  ansible.builtin.command: /usr/local/bin/rke2 --version
-  register: rke2_version_output
-  changed_when: false 
-  failed_when: false
-  tags: upgrade 
-
-- debug:
-    msg: "Current installed rke2 version is: {{ rke2_version_output.stdout }}"
-  when: rke2_version_output.rc == 0
-  tags: upgrade
-
 - block:
   - name: Create rke2 assets dir
     ansible.builtin.file:
@@ -32,17 +20,16 @@
     ansible.builtin.slurp:
       src: "/opt/rke2/{{ rke2_version_plain }}/sha256sum-amd64.txt"
     register: checksums 
-  - debug: var=checksums
 
-  - name: Register rke2 binary checksum
+  - name: Register rke2 archive checksum
     set_fact: 
-      rke2_bin_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2.linux-amd64$') | join() | split(' ') | first }}"
-  - debug: var=rke2_bin_checksum
+      rke2_tar_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2.linux-amd64.tar.gz$') | join() | split(' ') | first }}"
+  # - debug: var=rke2_tar_checksum
 
   - name: Register rke2 images checksum
     set_fact: 
       rke2_images_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2-images.linux-amd64.tar.zst$') | join() | split(' ') | first }}"
-  - debug: var=rke2_images_checksum
+  # - debug: var=rke2_images_checksum
 
   - name: Download rke2 images
     ansible.builtin.get_url:
@@ -54,15 +41,16 @@
       checksum: "sha256:{{ rke2_images_checksum }}"
     register: images_archive 
 
-  - name: Download rke2 binary
+  - name: Download rke2 archive
     ansible.builtin.get_url:
-      url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/rke2.linux-amd64"
-      dest: "/opt/rke2/{{ rke2_version_plain }}/rke2"
+      url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/rke2.linux-amd64.tar.gz"
+      dest: "/opt/rke2/{{ rke2_version_plain }}"
       owner: root
-      group: root 
+      group: root
       mode: 0755
-      checksum: "sha256:{{ rke2_bin_checksum }}"
-    register: binary_file
+      checksum: "sha256:{{ rke2_tar_checksum }}"
+    register: archive
+  # - debug: var=archive
 
   - name: Ensure rke2 images dir exists
     ansible.builtin.file:
@@ -81,22 +69,25 @@
       mode: 0644
       remote_src: true 
 
-  - name: Move rke2 binary to /usr/local/bin   
-    ansible.builtin.copy: 
-      src: "{{ binary_file.dest }}"
-      dest: "{{ rke2_bin_dir }}/rke2" 
+  - name: Unpack rke2 archive  
+    ansible.builtin.unarchive: 
+      src: "{{ archive.dest }}"
+      dest: /usr/local 
       owner: root 
       group: root 
       mode: 0755 
       remote_src: true
+    notify: selinux restorecon
 
-  - name: Install rke2 service file 
-    ansible.builtin.template:
-      src: rke2.service.j2
-      dest: "{{ rke2_systemd_dir }}/rke2-{{ rke2_role }}.service" 
+  - name: Write rke2 service file 
+    ansible.builtin.copy:
+      src: "/usr/local/lib/systemd/system/rke2-{{rke2_role }}.service"
+      dest: "{{ rke2_systemd_dir }}" 
       owner: root
       group: root 
       mode: 0644
-  when: rke2_version_output.rc != 0 or (rke2_upgrade | default('false') | bool )
+      remote_src: true
   become: true 
-  tags: upgrade
+
+  # run selinux restorecon now
+- meta: flush_handlers 

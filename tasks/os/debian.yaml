@@ -1,5 +1,0 @@
----
-- name: Apply all common tasks
-  include_tasks: "{{ item }}"
-  with_fileglob:
-    - "common/*.yaml"
