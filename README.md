@@ -18,8 +18,12 @@ No other variables are required for this role.  See `defaults/main.yaml` for ful
 ```
 rke2_channel: stable
 rke2_token: badsecret 
-rke2_api_ip: 192.168.1.200
 rke2_api_fqdn: rke2.local
+```
+
+If your nodes have more than one interface, and you want to specify which interface to use for cluster communications, set this variable (this assume):
+```
+rke_node_iface: eth1
 ```
 
 

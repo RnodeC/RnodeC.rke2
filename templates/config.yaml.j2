@@ -1,11 +1,11 @@
 ---
 {% if inventory_hostname != groups.servers.0 -%}
-server: https://{{ rke2_api_ip }}:{{ rke2_registration_port }}
+server: https://{{ rke2_api_fqdn }}:{{ rke2_registration_port }}
 {% endif %}
 token: {{ rke2_token }}
-selinux: {{ rke2_selinux }} 
+selinux: {{ rke2_selinux }}
 {% if rke2_role == 'server' %}
-tls-san: {{ rke2_api_fqdn }},{{ rke2_api_ip }}
+tls-san: {{ rke2_api_fqdn }}
 disable-cloud-controller: true
 {% if rke2_disable_components is defined %}
 disable: {{ rke2_disable_components }}
@@ -14,4 +14,8 @@ disable: {{ rke2_disable_components }}
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
 {% endif %}
+{% endif %}
+{% if rke2_node_ip is defined %}
+node-ip: {{ rke2_node_ip }}
+advertise-address: {{ rke2_node_ip }}
 {% endif %}

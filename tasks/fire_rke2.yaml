@@ -1,0 +1,27 @@
+---
+- name: Fire rke2 service
+  ansible.builtin.systemd:
+    name: "rke2-{{ rke2_role }}"
+    state: "{{ 'restarted' if rke2_action == 'upgrade' else 'started' }}"
+    enabled: true
+    daemon_reload: true
+    no_block: true
+  become: true
+
+- name: Wait for port 6443
+  ansible.builtin.wait_for:
+    port: 6443
+    delay: 60
+    timeout: 600
+
+- name: Wait for rke2 server nodes to be Ready
+  ansible.builtin.shell: "/var/lib/rancher/rke2/bin/kubectl --kubeconfig {{ rke2_server_kubeconfig }} get nodes | grep {{ ansible_hostname }}"
+  args: 
+    executable: /bin/bash
+  changed_when: false 
+  register: node_ready
+  until: '" Ready " in node_ready.stdout'
+  retries: 10
+  delay: 30
+  become: true
+  when: rke2_role == 'server'

@@ -1,10 +1,10 @@
 ---
 - name: Include common tasks
   include_tasks: common.yaml
-  when: action in ['upgrade', 'install']
+  when: rke2_action in ['upgrade', 'install']
 
 # can add install.yaml and/or upgrade.yaml file if there is ever a need to
 
 - name: Include teardown tasks
   include_tasks: teardown.yaml
-  when: action == 'teardown'
+  when: rke2_action == 'teardown'

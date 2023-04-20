@@ -3,25 +3,7 @@
 - name: Default rke2_role to server if not provided
   set_fact: 
     rke2_role: server
-  when: rke2_role is not defined
-
-### rke2_api_ip ###
-- name: Default rke2_api_ip to server 1's requested interface, if rke2_api_ip was not provided 
-  set_fact:
-    rke2_api_ip: "{{ hostvars[groups['servers'][0]]['ansible_facts'][interface]['ipv4']['address'] }}"
-  vars:
-    interface: "{{ rke2_api_iface }}"
-  when: rke2_api_ip is not defined and rke2_api_iface is defined
-
-- name: Default rke2_api_ip to server 1's primary ip if not provided
-  set_fact:
-    rke2_api_ip: "{{ hostvars[groups['servers'][0]]['ansible_default_ipv4']['address'] }}"
-  when: rke2_api_ip is not defined
-
-- debug: var=rke2_api_ip
-
-- fail:
-  when: rke2_api_ip is not defined
+  when: rke2_role is not defined 
 
 ### rke2_api_fqdn ###
 - name: Default rke2_api_fqdn to the FQDN of the first host in the servers group if not provided
@@ -33,41 +15,53 @@
 - fail:
   when: rke2_api_fqdn is not defined
 
-### rke2_token ###
-- name: Check for the existence of /etc/rancher/rke2/config.yaml on the first host in the servers group
-  stat:
-    path: /etc/rancher/rke2/config.yaml
-  register: rke2_config_file
-  delegate_to: "{{ groups['servers'][0] }}"
-  run_once: true
-
-- block:
-  - name: Read current config.yaml from first host in servers group
-    slurp:
-      src: /etc/rancher/rke2/config.yaml
-    register: rke2_config_file_content
-
-  - name: Read current config.yaml into yaml
-    set_fact:
-      rke2_config_yaml: "{{ rke2_config_file_content['content'] | b64decode | from_yaml }}"
-
-  - name: Set rke2_token to existing token found in config.yaml
-    set_fact:
-      rke2_token: "{{ rke2_config_yaml['token'] }}"
-
-  delegate_to: "{{ groups['servers'][0] }}"
-  run_once: true
-  when: rke2_config_file.stat.exists
-
-- name: Generate a default shared token if rke2_token was not found nor provided
+### rke2_node_ip ###
+- name: Set rke2_node ip if rke2_node_iface is defined
   set_fact:
-    rke2_token: "{{ lookup('password', '/dev/null', length=24) }}"
-  delegate_to: "{{ groups['servers'][0] }}"
-  run_once: true 
-  when: rke2_token is not defined
+    rke2_node_ip: "{{ hostvars[inventory_hostname]['ansible_' + interface_name]['ipv4']['address'] }}"
+  vars:
+    interface_name: "{{ rke2_node_iface }}"
+  when: rke2_node_iface is defined
+- debug: msg="rke2_node_ip = {{ rke2_node_ip }}"
+  when: rke2_node_iface is defined
 
-- debug: var=rke2_token 
 
-- name: Set rke2_token for all hosts
-  set_fact:
-    rke2_token: "{{ hostvars[groups['all'][0]]['rke2_token'] }}"
+#### rke2_token ###
+#- name: Check for the existence of /etc/rancher/rke2/config.yaml on the first host in the servers group
+#  stat:
+#    path: /etc/rancher/rke2/config.yaml
+#  register: rke2_config_file
+#  delegate_to: "{{ groups['servers'][0] }}"
+#  run_once: true
+#
+#- block:
+#  - name: Read current config.yaml from first host in servers group
+#    slurp:
+#      src: /etc/rancher/rke2/config.yaml
+#    register: rke2_config_file_content
+#
+#  - name: Read current config.yaml into yaml
+#    set_fact:
+#      rke2_config_yaml: "{{ rke2_config_file_content['content'] | b64decode | from_yaml }}"
+#
+#  - name: Set rke2_token to existing token found in config.yaml
+#    set_fact:
+#      rke2_token: "{{ rke2_config_yaml['token'] }}"
+#
+#  delegate_to: "{{ groups['servers'][0] }}"
+#  run_once: true
+#  when: rke2_config_file.stat.exists
+#
+#- name: Generate a default shared token if rke2_token was not found nor provided
+#  set_fact:
+#    rke2_token: "{{ lookup('password', '/dev/null', length=24) }}"
+#  delegate_to: "{{ groups['servers'][0] }}"
+#  run_once: true 
+#  when: rke2_token is not defined
+#
+#- debug: var=rke2_token 
+#
+#- name: Set rke2_token for all hosts
+#  set_fact:
+#    rke2_token: "{{ hostvars[groups['all'][0]]['rke2_token'] }}"
+#
