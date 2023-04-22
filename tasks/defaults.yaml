@@ -25,7 +25,6 @@
 - debug: msg="rke2_node_ip = {{ rke2_node_ip }}"
   when: rke2_node_iface is defined
 
-
 ### rke2_token ###
 - name: Check for the existence of /etc/rancher/rke2/config.yaml on the first host in the servers group
   ansible.builtin.stat:
@@ -54,9 +53,9 @@
 
 - name: Generate a default shared token if rke2_token was not found nor provided
   set_fact:
-    rke2_token: "{{ lookup('password', '/dev/null', length=24) }}"
+    rke2_token: "{{ lookup('community.general.random_string', length=12, special=false) }}"
   delegate_to: "{{ groups['servers'][0] }}"
-  run_once: true 
+  run_once: true
   when: rke2_token is not defined
 
 - debug: var=rke2_token 
