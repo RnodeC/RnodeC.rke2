@@ -5,10 +5,10 @@
 - name: OS Config 
   include_tasks: os.yaml
   
-- name: Establish rke2 Version 
+- name: Establish target rke2 Version 
   include_tasks: rke2_version.yaml
 
-- name: Check for existence of rke2_binary
+- name: Checking rke2 binary
   ansible.builtin.stat:
     path: "{{ rke2_bin_dir }}/rke2"
   register: rke2_binary
@@ -41,7 +41,7 @@
 
 - name: Write rke2-ingress-nginx-config Manifest
   ansible.builtin.template: 
-    src: "manifests/rke2-ingress-nginx-config.j2"
+    src: "manifests/rke2-ingress-nginx-config.yaml.j2"
     dest: "{{ rke2_manifests_dir }}"
     owner: root 
     group: root 

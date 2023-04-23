@@ -3,8 +3,9 @@
   hosts: all
   gather_facts: true
 
-  vars: 
-    rke2_channel: 'v1.23'
+  vars:
+    debug: true
+    rke2_channel: 'v1.24'
 
   roles:
   - RnodeC.rke2

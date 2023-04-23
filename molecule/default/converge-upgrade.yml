@@ -4,8 +4,19 @@
   gather_facts: true
 
   vars:
-    rke2_channel: 'v1.24'
-    action: upgrade 
+    debug: true
+    rke2_channel: 'v1.25'
+    rke2_action: upgrade 
+    rke2_nginx_tcp_services:
+    - name: geth
+      port: 30303
+    - name: lighthouse
+      port: 9000
+    rke2_nginx_udp_services:
+    - name: geth
+      port: 30303
+    - name: lighthouse
+      port: 9000
 
   roles:
   - RnodeC.rke2
