@@ -6,7 +6,7 @@
   include_tasks: os.yaml
   
 - name: Establish target rke2 Version 
-  include_tasks: rke2_version.yaml
+  include_tasks: rke2-version.yaml
 
 - name: Checking rke2 binary
   ansible.builtin.stat:
@@ -15,7 +15,7 @@
 
 - block:
   - name: Setup rke2 Config Files 
-    include_tasks: config_files.yaml
+    include_tasks: config-files.yaml
     
   - name: Install rke2
     include_tasks: install.yaml
