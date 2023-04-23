@@ -5,6 +5,8 @@
 
 # can add install.yaml and/or upgrade.yaml file if there is ever a need to
 
+# need restart.yaml here too
+
 - name: Include teardown tasks
   include_tasks: teardown.yaml
   when: rke2_action == 'teardown'

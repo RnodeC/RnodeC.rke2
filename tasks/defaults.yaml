@@ -10,9 +10,12 @@
   set_fact:
     rke2_api_fqdn: "{{ hostvars[groups['servers'][0]]['ansible_fqdn'] }}"
   when: rke2_api_fqdn is not defined
-- debug: var=rke2_api_fqdn
 
-- fail:
+- debug: var=rke2_api_fqdn
+  when: debug | default(false) | bool
+
+- name: Checking rke2_api_fqdn
+  fail:
   when: rke2_api_fqdn is not defined
 
 ### rke2_node_ip ###
@@ -23,7 +26,7 @@
     interface_name: "{{ rke2_node_iface }}"
   when: rke2_node_iface is defined
 - debug: msg="rke2_node_ip = {{ rke2_node_ip }}"
-  when: rke2_node_iface is defined
+  when: rke2_node_iface is defined and debug | default(false) | bool
 
 ### rke2_token ###
 - name: Check for the existence of /etc/rancher/rke2/config.yaml on the first host in the servers group
@@ -59,6 +62,7 @@
   when: rke2_token is not defined
 
 - debug: var=rke2_token 
+  when: debug | default(false) | bool
 
 - name: Set rke2_token for all hosts
   set_fact:

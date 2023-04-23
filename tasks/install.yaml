@@ -24,12 +24,15 @@
   - name: Register rke2 archive checksum
     set_fact: 
       rke2_tar_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2.linux-amd64.tar.gz$') | join() | split(' ') | first }}"
-  # - debug: var=rke2_tar_checksum
+  - debug: var=rke2_tar_checksum
+    when: debug | default(false) | bool
 
   - name: Register rke2 images checksum
     set_fact: 
       rke2_images_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2-images.linux-amd64.tar.zst$') | join() | split(' ') | first }}"
-  # - debug: var=rke2_images_checksum
+  
+  - debug: var=rke2_images_checksum
+    when: debug | default(false) | bool
 
   - name: Download rke2 images
     ansible.builtin.get_url:
@@ -42,6 +45,9 @@
       timeout: 600
     register: images_archive 
 
+  - debug: var=images_archive
+    when: debug | default(false) | bool
+
   - name: Download rke2 archive
     ansible.builtin.get_url:
       url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/rke2.linux-amd64.tar.gz"
@@ -52,7 +58,9 @@
       checksum: "sha256:{{ rke2_tar_checksum }}"
       timeout: 600
     register: archive
-  # - debug: var=archive
+   
+  - debug: var=archive
+    when: debug | default(false) | bool
 
   - name: Ensure rke2 images dir exists
     ansible.builtin.file:
