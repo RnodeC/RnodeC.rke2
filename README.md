@@ -35,7 +35,8 @@ Alternatively, you can use an explicit rke2_version, such as `rke2_version: v1.2
 
 Dependencies
 ------------
-None.  Optionally, apply the `RnodeC.lockdown` role (**coming soon**) to apply some added security to the cluster nodes.  
+
+None
 
 Example Playbook
 ----------------
