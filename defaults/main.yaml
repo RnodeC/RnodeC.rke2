@@ -13,6 +13,6 @@ rke2_local_storage_path: /var/lib/rancher/rke2/storage
 rke2_local_storage_storageclass_name: local
 rke2_local_path_provisioner_version: v0.0.24
 rke2_server_kubeconfig: /etc/rancher/rke2/rke2.yaml
-rke2_selinux: false
+rke2_selinux: true
 rke2_selinux_release: v0.11.stable.1
 rke2_selinux_version: rke2-selinux-0.11-1

@@ -1,4 +1,10 @@
 ---
+### rke2_role ###
+- name: Default rke2_role to server if not provided
+  set_fact: 
+    rke2_role: server
+  when: rke2_role is not defined 
+  
 - name: Include common tasks
   include_tasks: common.yaml
   when: rke2_action in ['upgrade', 'install']

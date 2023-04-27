@@ -1,10 +1,4 @@
 ---
-### rke2_role ###
-- name: Default rke2_role to server if not provided
-  set_fact: 
-    rke2_role: server
-  when: rke2_role is not defined 
-
 ### rke2_api_fqdn ###
 - name: Default rke2_api_fqdn to the FQDN of the first host in the servers group if not provided
   set_fact:

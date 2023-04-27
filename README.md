@@ -1,12 +1,12 @@
 RnodeC.rke2
 =========
 
-This role will deploy rke2.  (linux amd64 only) 
+This role will deploy rke2.  Linux x86_64 only.  RKE2 version 1.25+ only (due to hardcoded cis-profile setting)
 
 Requirements
 ------------
 
-At least a single vm.   
+None   
 
 Role Variables
 --------------
@@ -47,7 +47,7 @@ Example Playbook
   hosts: cluster
 
   vars: 
-    rke2_channel: 'v1.24'
+    rke2_channel: 'v1.25'
   
   roles:
   - role: RnodeC.rke2 

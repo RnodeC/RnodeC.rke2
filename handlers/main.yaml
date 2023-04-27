@@ -30,4 +30,3 @@
     - /usr/local/bin
   become: true 
   when: ansible_os_family | lower == "redhat"
-  

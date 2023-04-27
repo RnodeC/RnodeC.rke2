@@ -8,6 +8,17 @@
     mode: 0700
   become: true 
 
+### etcd user ###
+- name: Create etcd user
+  ansible.builtin.user:
+    name: etcd
+    comment: etcd user
+    shell: /sbin/nologin
+    create_home: no
+    system: true
+    uid: "{{ rke2_etcd_uid | default(omit) }}"
+  become: true
+
 ### NetworkManager ###
 - block:
   - name: Collect services fact
@@ -52,5 +63,10 @@
       name: /tmp/selinux.rpm
       state: present
     when: ansible_distribution_major_version == '8'
+  
+  - name: Remove rke2 selinux rpm
+    ansible.builtin.file:
+      name: /tmp/selinux.rpm
+      state: absent
   become: true 
-  when: ansible_os_family | lower == "redhat"
+  when: ansible_os_family | lower == "redhat" and rke2_selinux | bool

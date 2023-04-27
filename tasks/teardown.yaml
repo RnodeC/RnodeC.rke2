@@ -1,0 +1,26 @@
+---
+- block:
+  - name: Stop RKE2 service
+    ansible.builtin.systemd:
+      name: "rke2-{{ rke2_role }}.service"
+      state: stopped
+      enabled: false
+    failed_when: false
+
+  - name: Run killall script
+    ansible.builtin.command: sh /usr/local/bin/rke2-killall.sh
+    failed_when: false
+    changed_when: false
+
+  - name: Run uninstall script
+    ansible.builtin.command: sh /usr/local/bin/rke2-uninstall.sh
+    changed_when: false
+
+  - name: Erase all rke2 files
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+    - /var/lib/rancher/rke2
+    - /usr/local/bin/rke2
+  become: true

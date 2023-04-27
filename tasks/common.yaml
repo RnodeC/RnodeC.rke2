@@ -13,38 +13,12 @@
     path: "{{ rke2_bin_dir }}/rke2"
   register: rke2_binary
 
-- block:
-  - name: Setup rke2 Config Files 
-    include_tasks: config-files.yaml
+- name: Setup rke2 Config Files 
+  include_tasks: config-files.yaml
     
-  - name: Install rke2
-    include_tasks: install.yaml
+- name: Install rke2
+  include_tasks: install.yaml
   when: not rke2_binary.stat.exists or rke2_action == 'upgrade'
 
-- name: Start all servers
+- name: Fire rke2
   include_tasks: fire-rke2.yaml
-  when: inventory_hostname in groups['servers']
-
-- name: Start all agents
-  include_tasks: fire-rke2.yaml
-  when: inventory_hostname not in groups['servers']
-
-- name: Write local-path-provisioner Manifest
-  ansible.builtin.template: 
-    src: "manifests/local-path-provisioner.yaml.j2"
-    dest: "{{ rke2_manifests_dir }}/local-path-provisioner.yaml"
-    owner: root 
-    group: root 
-    mode: 0644
-  become: true 
-  when: rke2_local_storage and rke2_role == 'server'
-
-- name: Write rke2-ingress-nginx-config Manifest
-  ansible.builtin.template: 
-    src: "manifests/rke2-ingress-nginx-config.yaml.j2"
-    dest: "{{ rke2_manifests_dir }}/rke2-ingress-nginx-config.yaml"
-    owner: root 
-    group: root 
-    mode: 0644
-  become: true
-  when: rke2_nginx_tcp_services is defined or rke2_nginx_udp_services is defined

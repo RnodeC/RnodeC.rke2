@@ -89,6 +89,22 @@
       remote_src: true
     notify: selinux restorecon
 
+  # run selinux restorecon now
+  - meta: flush_handlers 
+  
+  - name: Load kernel parameters
+    ansible.builtin.copy:
+      src: /usr/local/share/rke2/rke2-cis-sysctl.conf
+      dest: /etc/sysctl.d/60-rke2-cis.conf
+      owner: root
+      group: root
+      mode: 0644
+      remote_src: true
+    notify: restart systemd-sysctl
+
+  # run restart systemd-sysctl now
+  - meta: flush_handlers 
+  
   - name: Write rke2 service file 
     ansible.builtin.copy:
       src: "/usr/local/lib/systemd/system/rke2-{{rke2_role }}.service"
@@ -99,5 +115,3 @@
       remote_src: true
   become: true 
 
-  # run selinux restorecon now
-- meta: flush_handlers 
