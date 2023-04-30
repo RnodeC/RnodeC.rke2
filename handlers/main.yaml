@@ -19,6 +19,12 @@
     state: restarted
   become: true
 
+- name: restart iscsid
+  ansible.builtin.systemd:
+    name: iscsid
+    state: restarted
+  become: true
+
 - name: selinux restorecon
   ansible.builtin.command:
     argv:
@@ -28,5 +34,6 @@
     - /var/lib/rancher
     - /etc/rancher
     - /usr/local/bin
+    - "{{ rke2_}}"
   become: true 
   when: ansible_os_family | lower == "redhat"

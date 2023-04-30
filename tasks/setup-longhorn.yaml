@@ -1,0 +1,69 @@
+---
+- name: Update apt cache 
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == 'Debian'
+  become: true
+
+### iscsi ###
+- block:
+  - name: Install open-iscsi (RedHat)
+    ansible.builtin.yum:
+      name: iscsi-initiator-utils
+      state: "{{ 'latest' if rke2_action == 'upgrade' else 'present' }}"
+      disable_excludes: all
+    when: ansible_os_family == 'RedHat'
+
+  - name: Install open-iscsi (Debian)
+    ansible.builtin.apt:
+      name: open-iscsi
+      state: "{{ 'latest' if rke2_action == 'upgrade' else 'present' }}"
+    when: ansible_os_family == 'Debian'
+
+  - name: Generate iSCSI initiator name
+    ansible.builtin.command: /sbin/iscsi-iname
+    register: iscsi_iname_output
+    changed_when: false
+
+  - name: Check current iSCSI initiator name
+    ansible.builtin.slurp:
+      src: /etc/iscsi/initiatorname.iscsi
+    register: iscsi_initiator_file
+    changed_when: false
+    failed_when: false
+
+  - name: Check if the iSCSI initiator name needs to be updated
+    ansible.builtin.set_fact:
+      update_initiator_name: 
+    when: (iscsi_initiator_file.content | b64decode).split('=')[1].strip() != iscsi_iname_output.stdout
+
+  - name: Configure iSCSI initiator name
+    copy:
+      content: "InitiatorName={{ iscsi_iname_output.stdout }}"
+      dest: /etc/iscsi/initiatorname.iscsi
+      owner: root
+      group: root
+      mode: 0644
+    when: update_initiator_name | bool
+
+  become: true
+  notify: restart iscsid
+
+### extra packages ###
+- name: Install extra dependencies required by Longhorn
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: "{{ 'latest' if rke2_action == 'upgrade' else 'present' }}"
+  failed_when: false
+  loop:
+    - bash
+    - curl
+    - findmnt
+    - grep
+    - awk
+    - blkid
+    - lsblk
+  become: true
+
+# selinux policy config is in os.yaml.  longhorn and local-storage share the same policy

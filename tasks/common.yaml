@@ -4,9 +4,6 @@
 
 - name: OS Config 
   include_tasks: os.yaml
-  
-- name: Establish target rke2 Version 
-  include_tasks: rke2-version.yaml
 
 - name: Checking rke2 binary
   ansible.builtin.stat:
@@ -17,8 +14,15 @@
   include_tasks: config-files.yaml
     
 - name: Install rke2
-  include_tasks: install.yaml
+  include_tasks: install-rke2.yaml
   when: not rke2_binary.stat.exists or rke2_action == 'upgrade'
+
+- name: Setup Manifest Files 
+  include_tasks: embedded-manifests.yaml
 
 - name: Fire rke2
   include_tasks: fire-rke2.yaml
+
+- name: Setup for Longhorn
+  include_tasks: setup-longhorn.yaml
+  when: rke2_longhorn_storage | default(false) | bool

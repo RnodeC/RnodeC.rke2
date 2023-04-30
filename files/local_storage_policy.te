@@ -1,0 +1,12 @@
+module local_storage_policy 1.0;
+
+require {
+    type container_file_t;
+    type var_lib_t;
+    class dir all;
+    class file all;
+}
+
+# Allow necessary file operations for rke2_local_storage_path
+allow var_lib_t container_file_t:dir all;
+allow var_lib_t container_file_t:file all;

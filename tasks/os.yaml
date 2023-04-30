@@ -26,7 +26,7 @@
 
   - name: Write rke2-canal.conf into /etc/NetworkManager/conf.d
     ansible.builtin.copy: 
-      src: os/rke2-canal.conf
+      src: rke2-canal.conf
       dest: /etc/NetworkManager/conf.d/rke2-canal.conf
       owner: root 
       group: root 
@@ -37,6 +37,11 @@
 
 ### selinux (rhel only) ###
 - block:
+  - name: Ensure SELinux policy management utilities are installed
+    ansible.builtin.yum:
+      name: policycoreutils-python-utils
+      state: present
+
   - name: Install container-selinux package 
     ansible.builtin.package: 
       name: container-selinux
@@ -63,10 +68,48 @@
       name: /tmp/selinux.rpm
       state: present
     when: ansible_distribution_major_version == '8'
-  
-  - name: Remove rke2 selinux rpm
-    ansible.builtin.file:
-      name: /tmp/selinux.rpm
-      state: absent
+
+  ### local storage - applies to local or longhorn ###
+  - block:
+    - name: Copy local storage SELinux policy file to target host
+      ansible.builtin.copy:
+        src: local_storage_policy.te
+        dest: /opt/rke2/local_storage_policy.te
+        owner: root
+        group: root
+        mode: '0644'
+      register: local_storage_policy
+
+    - block:
+      - name: Compile local storage SELinux module
+        ansible.builtin.command: >
+          checkmodule -M -m -o /opt/rke2/local_storage_policy.mod /opt/rke2/local_storage_policy.te
+
+      - name: Create local storage SELinux policy package
+        ansible.builtin.command: >
+          semodule_package -o /opt/rke2/local_storage_policy.pp -m /opt/rke2/local_storage_policy.mod
+
+      - name: Install local storage SELinux policy
+        ansible.builtin.command: >
+          semodule -i /opt/rke2/local_storage_policy.pp
+
+      - name: Apply the new local storage SELinux file context to rke2_longhorn_storage_path
+        command: >
+          restorecon -Rv "{{ rke2_longhorn_storage_path }}"
+        when: 
+        - rke2_longhorn_storage | default(false) | bool
+        - rke2_longhorn_storage_path is defined
+        
+      - name: Apply the new local storage SELinux file context to rke2_local_storage_path
+        command: >
+          restorecon -Rv "{{ rke2_local_storage_path }}"
+        when: 
+        - rke2_local_storage | default(false) | bool
+        - rke2_local_storage_path is defined
+
+      when: local_storage_policy is changed
+    when: rke2_local_storage or rke2_longhorn_storage | default(false) | bool
   become: true 
-  when: ansible_os_family | lower == "redhat" and rke2_selinux | bool
+  when: 
+  - ansible_os_family == "RedHat" 
+  - rke2_selinux | default(false) | bool

@@ -23,4 +23,6 @@
     with_items:
     - /var/lib/rancher/rke2
     - /usr/local/bin/rke2
+    - /tmp/selinux.rpm
+    failed_when: false
   become: true
