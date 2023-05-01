@@ -10,8 +10,8 @@ spec:
       publishService:
         enabled: true
       extraArgs:
-        tcp-services-configmap: "$(POD_NAMESPACE)/tcp-services"
-        udp-services-configmap: "$(POD_NAMESPACE)/udp-services"
+        tcp-services-configmap: "$(POD_NAMESPACE)/rke2-ingress-nginx-tcp"
+        udp-services-configmap: "$(POD_NAMESPACE)/rke2-ingress-nginx-udp"
       config:
         use-proxy-protocol: "false"
 {% if rke2_nginx_tcp_services is defined and rke2_nginx_tcp_services %}
