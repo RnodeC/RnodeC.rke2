@@ -34,6 +34,5 @@
     - /var/lib/rancher
     - /etc/rancher
     - /usr/local/bin
-    - "{{ rke2_}}"
   become: true 
   when: ansible_os_family | lower == "redhat"
