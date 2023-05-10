@@ -23,12 +23,12 @@ spec:
 {% if rke2_nginx_tcp_services is defined and rke2_nginx_tcp_services %}
     tcp:
 {% for service in rke2_nginx_tcp_services %}
-      {{ service.port }}: "{{ service.name }}/{{ service.name }}:{{ service.port }}"
+      {{ service.port }}: "{{ service.namespace }}/{{ service.name }}:{{ service.port }}"
 {% endfor %}
 {% endif %}
 {% if rke2_nginx_udp_services is defined and rke2_nginx_udp_services %}
     udp:
 {% for service in rke2_nginx_udp_services %}
-      {{ service.port }}: "{{ service.name }}/{{ service.name }}:{{ service.port }}"
+      {{ service.port }}: "{{ service.namespace }}/{{ service.name }}:{{ service.port }}"
 {% endfor %}
 {% endif %}
