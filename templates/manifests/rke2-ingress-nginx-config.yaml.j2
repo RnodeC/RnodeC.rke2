@@ -6,4 +6,4 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    {{ (rke2_ingress_nginx_default_config | combine(rke2_ingress_nginx_user_config, recursive=True)) | to_yaml(indent=4) }}
+    {{ (rke2_ingress_nginx_default_config | combine(rke2_ingress_nginx_user_config, recursive=True)) | to_yaml(indent=4) | indent(4) }}
