@@ -19,3 +19,16 @@ rke2_server_kubeconfig: /etc/rancher/rke2/rke2.yaml
 rke2_selinux: true
 rke2_selinux_release: v0.11.stable.1
 rke2_selinux_version: rke2-selinux-0.11-1
+
+# here is where you can override default ingress-nginx helm config
+# (the default defaults are in vars/main.yaml)
+rke2_ingress_nginx_user_config:
+  controller:
+    resources:
+      limits:
+        cpu: 4
+        memory: 4Gi
+    config:
+      use-proxy-protocol: "false"
+      proxy-connect-timeout: "30"
+      proxy-stream-timeout: "10m"

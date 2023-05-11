@@ -1,0 +1,20 @@
+---
+rke2_ingress_nginx_default_config:
+  controller:
+    hostNetwork: true
+    hostPort:
+      enabled: true
+      ports:
+        http: 80
+        https: 443
+    metrics:
+      enabled: true
+    publishService:
+      enabled: true
+    resources:
+      limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi

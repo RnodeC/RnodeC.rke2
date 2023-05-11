@@ -6,39 +6,4 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    controller:
-      hostNetwork: true
-      hostPort:
-        enabled: true
-        ports:
-          http: 80
-          https: 443
-      metrics:
-        enabled: true
-      publishService:
-        enabled: true
-      resources:
-        limits:
-        cpu: 4
-        memory: 4Gi
-      requests:
-        cpu: 500m
-        memory: 1Gi
-      extraArgs:
-        tcp-services-configmap: "$(POD_NAMESPACE)/rke2-ingress-nginx-tcp"
-        udp-services-configmap: "$(POD_NAMESPACE)/rke2-ingress-nginx-udp"
-      config:
-        use-proxy-protocol: "false"
-        proxy-connect-timeout: "30"
-{% if rke2_nginx_tcp_services is defined and rke2_nginx_tcp_services %}
-    tcp:
-{% for service in rke2_nginx_tcp_services %}
-      {{ service.port }}: "{{ service.namespace }}/{{ service.name }}:{{ service.port }}"
-{% endfor %}
-{% endif %}
-{% if rke2_nginx_udp_services is defined and rke2_nginx_udp_services %}
-    udp:
-{% for service in rke2_nginx_udp_services %}
-      {{ service.port }}: "{{ service.namespace }}/{{ service.name }}:{{ service.port }}"
-{% endfor %}
-{% endif %}
+    {{ (rke2_ingress_nginx_default_config | combine(rke2_ingress_nginx_user_config, recursive=True)) | to_yaml(indent=4) }}

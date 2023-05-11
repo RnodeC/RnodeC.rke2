@@ -40,4 +40,3 @@
     group: root 
     mode: 0644
   become: true
-  when: rke2_nginx_tcp_services is defined or rke2_nginx_udp_services is defined
