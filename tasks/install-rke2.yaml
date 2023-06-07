@@ -5,8 +5,8 @@
       path: "/opt/rke2/{{ rke2_version_plain }}"
       state: directory
       owner: root
-      group: root 
-      mode: 0755 
+      group: root
+      mode: 0755
 
   - name: Download rke2 checksums
     ansible.builtin.get_url:
@@ -19,18 +19,18 @@
   - name: Read rke2 checksums
     ansible.builtin.slurp:
       src: "/opt/rke2/{{ rke2_version_plain }}/sha256sum-amd64.txt"
-    register: checksums 
+    register: checksums
 
   - name: Register rke2 archive checksum
-    set_fact: 
+    set_fact:
       rke2_tar_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2.linux-amd64.tar.gz$') | join() | split(' ') | first }}"
   - debug: var=rke2_tar_checksum
     when: debug | default(false) | bool
 
   - name: Register rke2 images checksum
-    set_fact: 
+    set_fact:
       rke2_images_checksum: "{{ checksums['content'] | b64decode | split('\n') | select('match', '.*rke2-images.linux-amd64.tar.zst$') | join() | split(' ') | first }}"
-  
+
   - debug: var=rke2_images_checksum
     when: debug | default(false) | bool
 
@@ -39,11 +39,11 @@
       url: "https://github.com/rancher/rke2/releases/download/{{ rke2_version | urlencode }}/rke2-images.linux-amd64.tar.zst"
       dest: "/opt/rke2/{{ rke2_version_plain }}"
       owner: root
-      group: root 
+      group: root
       mode: 0644
       checksum: "sha256:{{ rke2_images_checksum }}"
       timeout: 600
-    register: images_archive 
+    register: images_archive
 
   - debug: var=images_archive
     when: debug | default(false) | bool
@@ -58,7 +58,7 @@
       checksum: "sha256:{{ rke2_tar_checksum }}"
       timeout: 600
     register: archive
-   
+
   - debug: var=archive
     when: debug | default(false) | bool
 
@@ -66,32 +66,32 @@
     ansible.builtin.file:
       path: "{{ rke2_images_dir }}"
       state: directory
-      owner: root 
-      group: root 
-      mode: 0755 
+      owner: root
+      group: root
+      mode: 0755
 
-  - name: Move images archive to images dir  
-    ansible.builtin.copy: 
+  - name: Move images archive to images dir
+    ansible.builtin.copy:
       src: "{{ images_archive.dest }}"
       dest: "{{ rke2_images_dir }}/"
-      owner: root 
-      group: root 
+      owner: root
+      group: root
       mode: 0644
-      remote_src: true 
+      remote_src: true
 
-  - name: Unpack rke2 archive  
-    ansible.builtin.unarchive: 
+  - name: Unpack rke2 archive
+    ansible.builtin.unarchive:
       src: "{{ archive.dest }}"
-      dest: /usr/local 
-      owner: root 
-      group: root 
-      mode: 0755 
+      dest: /usr/local
+      owner: root
+      group: root
+      mode: 0755
       remote_src: true
     notify: selinux restorecon
 
   # run selinux restorecon now
-  - meta: flush_handlers 
-  
+  - meta: flush_handlers
+
   - name: Load kernel parameters
     ansible.builtin.copy:
       src: /usr/local/share/rke2/rke2-cis-sysctl.conf
@@ -103,12 +103,12 @@
     notify: restart systemd-sysctl
 
   # run restart systemd-sysctl now
-  - meta: flush_handlers 
-  
-  - name: Write rke2 service file 
+  - meta: flush_handlers
+
+  - name: Write rke2 service file
     ansible.builtin.copy:
       src: "/usr/local/lib/systemd/system/rke2-{{rke2_role }}.service"
-      dest: "{{ rke2_systemd_dir }}" 
+      dest: "{{ rke2_systemd_dir }}"
       owner: root
       group: root
       mode: 0644

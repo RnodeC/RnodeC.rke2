@@ -1,12 +1,46 @@
 ---
 - name: Add local-rke2.env file to server root homedir, for any local debugging
-  ansible.builtin.copy: 
+  ansible.builtin.copy:
     src: local-rke2.env
     dest: /root/local-rke2.env
-    owner: root 
-    group: root 
+    owner: root
+    group: root
     mode: 0700
-  become: true 
+  become: true
+
+- name: Ensure /opt/rke2 exists
+  ansible.builtin.file:
+    name: /opt/rke2
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  become: true
+
+### local storage - applies to local or longhorn ###
+- name: Ensure rke2_local_storage_path exists
+  ansible.builtin.file:
+    name: "{{ rke2_local_storage_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+  become: true
+  when:
+    - rke2_local_storage | default(false) | bool
+    - rke2_local_storage_path is defined
+
+- name: Ensure rke2_longhorn_storage_path exists
+  ansible.builtin.file:
+    name: "{{ rke2_longhorn_storage_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+  become: true
+  when:
+    - rke2_longhorn_storage | default(false) | bool
+    - rke2_longhorn_storage_path is defined
 
 ### etcd user ###
 - name: Create etcd user
@@ -25,13 +59,13 @@
     ansible.builtin.service_facts:
 
   - name: Write rke2-canal.conf into /etc/NetworkManager/conf.d
-    ansible.builtin.copy: 
+    ansible.builtin.copy:
       src: rke2-canal.conf
       dest: /etc/NetworkManager/conf.d/rke2-canal.conf
-      owner: root 
-      group: root 
+      owner: root
+      group: root
       mode: 0644
-    notify: restart NetworkManager 
+    notify: restart NetworkManager
     when: "'NetworkManager.service' in services and services['NetworkManager.service'].state == 'running'"
   become: true
 
@@ -42,74 +76,66 @@
       name: policycoreutils-python-utils
       state: present
 
-  - name: Install container-selinux package 
-    ansible.builtin.package: 
-      name: container-selinux
-      state: latest
-
   - name: Download rke2's selinux rpm
     ansible.builtin.get_url:
-      url: "https://github.com/rancher/rke2-selinux/releases/download/{{ rke2_selinux_release }}/{{ rke2_selinux_version }}.el{{ ansible_distribution_major_version }}.noarch.rpm"
-      dest: /tmp/selinux.rpm
+      url: "https://github.com/rancher/rke2-selinux/releases/download/v{{ rke2_selinux_version }}.stable.1/rke2-selinux-{{ rke2_selinux_version }}-1.el{{ ansible_distribution_major_version }}.noarch.rpm"
+      dest: /opt/rke2/rke2-selinux-v{{ rke2_selinux_version }}.rpm
 
   - name: Import rancher's gpg public key
     ansible.builtin.rpm_key:
       key: https://rpm.rancher.io/public.key
       state: present
-    
+
   - name: Install rke2 selinux rpm (rhel 7)
     ansible.builtin.yum:
-      name: /tmp/selinux.rpm
+      name:  /opt/rke2/rke2-selinux-v{{ rke2_selinux_version }}.rpm
       state: present
     when: ansible_distribution_major_version == '7'
 
   - name: Install rke2 selinux rpm (rhel 8)
     ansible.builtin.dnf:
-      name: /tmp/selinux.rpm
+      name:  /opt/rke2/rke2-selinux-v{{ rke2_selinux_version }}.rpm
       state: present
     when: ansible_distribution_major_version == '8'
 
-  ### local storage - applies to local or longhorn ###
   - block:
-    - name: Copy local storage SELinux policy file to target host
-      ansible.builtin.copy:
-        src: local_storage_policy.te
-        dest: /opt/rke2/local_storage_policy.te
-        owner: root
-        group: root
-        mode: '0644'
-      register: local_storage_policy
 
-    - block:
-      - name: Compile local storage SELinux module
-        ansible.builtin.command: >
-          checkmodule -M -m -o /opt/rke2/local_storage_policy.mod /opt/rke2/local_storage_policy.te
+    - name: Add SELinux file context to rke2_local_storage_path
+      community.general.sefcontext:
+        ftype: a
+        reload: true
+        seuser: system_u
+        setype: container_file_t
+        target: "{{ rke2_local_storage_path }}(/.*)?"
+        state: present
 
-      - name: Create local storage SELinux policy package
-        ansible.builtin.command: >
-          semodule_package -o /opt/rke2/local_storage_policy.pp -m /opt/rke2/local_storage_policy.mod
+    - name: Apply SELinux file context to filesystem
+      ansible.builtin.command:
+        cmd: restorecon -Rv /var/data/
+        warn: false
+    when: rke2_local_storage | default(false) | bool
 
-      - name: Install local storage SELinux policy
-        ansible.builtin.command: >
-          semodule -i /opt/rke2/local_storage_policy.pp
+  - block:
+    - name: Add SELinux file context to rke2_longhorn_storage_path
+      community.general.sefcontext:
+        ftype: a
+        reload: true
+        seuser: system_u
+        setype: container_file_t
+        target: "{{ rke2_local_storage_path }}(/.*)?"
+        state: present
 
-      - name: Apply the new local storage SELinux file context to rke2_longhorn_storage_path
-        command: >
-          restorecon -Rv "{{ rke2_longhorn_storage_path }}"
-        when: 
-        - rke2_longhorn_storage | default(false) | bool
-        - rke2_longhorn_storage_path is defined
-        
-      - name: Apply the new local storage SELinux file context to rke2_local_storage_path
-        command: >
-          restorecon -Rv "{{ rke2_local_storage_path }}"
-        when: 
-        - rke2_local_storage | default(false) | bool
-        - rke2_local_storage_path is defined
-
-      when: local_storage_policy is changed
-    when: rke2_local_storage or rke2_longhorn_storage | default(false) | bool
-  become: true 
-  when: 
-  - ansible_os_family == "RedHat" 
+    - name: Apply SELinux file context to filesystem
+      ansible.builtin.command:
+        cmd: restorecon -Rv /var/data/
+        warn: false
+    when: rke2_longhorn_storage | default(false) | bool
+  become: true
+  when:
+  - ansible_os_family == "RedHat"
   - rke2_selinux | default(false) | bool
+
+### Some extra Longhorn requirements
+- name: Setup for Longhorn
+  include_tasks: setup-longhorn.yaml
+  when: rke2_longhorn_storage | default(false) | bool
