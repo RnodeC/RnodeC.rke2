@@ -122,7 +122,7 @@
         reload: true
         seuser: system_u
         setype: container_file_t
-        target: "{{ rke2_local_storage_path }}(/.*)?"
+        target: "{{ rke2_longhorn_storage_path }}(/.*)?"
         state: present
 
     - name: Apply SELinux file context to filesystem
