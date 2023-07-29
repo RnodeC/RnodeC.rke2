@@ -23,6 +23,7 @@
   ansible.builtin.systemd:
     name: iscsid
     state: restarted
+    enabled: true
   become: true
 
 - name: selinux restorecon
@@ -34,5 +35,5 @@
     - /var/lib/rancher
     - /etc/rancher
     - /usr/local/bin
-  become: true 
+  become: true
   when: ansible_os_family | lower == "redhat"

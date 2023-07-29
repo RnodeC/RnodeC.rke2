@@ -5,7 +5,7 @@
 
   vars:
     debug: true
-    rke2_channel: 'v1.24'
+    rke2_channel: 'v1.25'
 
   roles:
   - RnodeC.rke2
