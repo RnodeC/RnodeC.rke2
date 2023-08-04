@@ -112,7 +112,6 @@
     - name: Apply SELinux file context to filesystem
       ansible.builtin.command:
         cmd: restorecon -Rv /var/data/
-        warn: false
     when: rke2_local_storage | default(false) | bool
 
   - block:
@@ -128,7 +127,6 @@
     - name: Apply SELinux file context to filesystem
       ansible.builtin.command:
         cmd: restorecon -Rv /var/data/
-        warn: false
     when: rke2_longhorn_storage | default(false) | bool
   become: true
   when:
