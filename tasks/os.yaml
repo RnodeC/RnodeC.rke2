@@ -73,7 +73,9 @@
 - block:
   - name: Ensure SELinux policy management utilities are installed
     ansible.builtin.yum:
-      name: policycoreutils-python-utils
+      name: 
+        - policycoreutils-python-utils
+        - python3-libselinux
       state: present
 
   - name: Download rke2's selinux rpm
