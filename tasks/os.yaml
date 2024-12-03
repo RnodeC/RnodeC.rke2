@@ -103,13 +103,9 @@
   - block:
 
     - name: Add SELinux file context to rke2_local_storage_path
-      community.general.sefcontext:
-        ftype: a
-        reload: true
-        seuser: system_u
-        setype: container_file_t
-        target: "{{ rke2_local_storage_path }}(/.*)?"
-        state: present
+      ansible.builtin.command:
+        cmd: semanage fcontext -a -t container_file_t "{{ rke2_local_storage_path }}(/.*)?"
+      changed_when: true
 
     - name: Apply SELinux file context to filesystem
       ansible.builtin.command:
@@ -118,13 +114,9 @@
 
   - block:
     - name: Add SELinux file context to rke2_longhorn_storage_path
-      community.general.sefcontext:
-        ftype: a
-        reload: true
-        seuser: system_u
-        setype: container_file_t
-        target: "{{ rke2_longhorn_storage_path }}(/.*)?"
-        state: present
+      ansible.builtin.command:
+        cmd: semanage fcontext -a -t container_file_t "{{ rke2_longhorn_storage_path }}(/.*)?"
+      changed_when: true
 
     - name: Apply SELinux file context to filesystem
       ansible.builtin.command:
