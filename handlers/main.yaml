@@ -37,3 +37,6 @@
     - /usr/local/bin
   become: true
   when: ansible_os_family | lower == "redhat"
+  ignore_errors: true
+  register: restorecon_result
+  changed_when: restorecon_result.rc != 0 and not restorecon_result.stderr is search('No such file or directory')
