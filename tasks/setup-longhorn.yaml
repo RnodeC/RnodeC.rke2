@@ -8,12 +8,16 @@
 
 ### iscsi ###
 - block:
-  - name: Install open-iscsi (RedHat)
-    ansible.builtin.yum:
-      name: iscsi-initiator-utils
-      state: "{{ 'latest' if rke2_action == 'upgrade' else 'present' }}"
-      disable_excludes: all
-    when: ansible_os_family == 'RedHat'
+  #- name: Install open-iscsi (RedHat)
+  #  ansible_python_interpreter: /usr/libexec/platform-python
+  #  ansible.builtin.yum:
+  #    name: iscsi-initiator-utils
+  ##    state: "{{ 'latest' if rke2_action == 'upgrade' else 'present' }}"
+  ##    disable_excludes: all
+#
+#
+   # when: ansible_os_family == 'RedHat'
+   # become: true
 
   - name: Install open-iscsi (Debian)
     ansible.builtin.apt:
@@ -50,20 +54,5 @@
   become: true
   notify: restart iscsid
 
-### extra packages ###
-- name: Install extra dependencies required by Longhorn
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: "{{ 'latest' if rke2_action == 'upgrade' else 'present' }}"
-  failed_when: false
-  loop:
-    - bash
-    - curl
-    - findmnt
-    - grep
-    - awk
-    - blkid
-    - lsblk
-  become: true
 
 # selinux policy config is in os.yaml.  longhorn and local-storage share the same policy

@@ -71,12 +71,14 @@
 
 ### selinux (rhel only) ###
 - block:
-  - name: Ensure SELinux policy management utilities are installed
-    ansible.builtin.yum:
-      name: 
-        - policycoreutils-python-utils
-        - python3-libselinux
-      state: present
+  #- name: Ensure SELinux policy management utilities are installed
+  #  vars:
+  #    ansible_python_interpreter: /usr/libexec/platform-python
+  #  ansible.builtin.yum:
+  #    name: 
+  #      - policycoreutils-python-utils
+  #      - python3-libselinux
+  #    state: present
 
   - name: Download rke2's selinux rpm
     ansible.builtin.get_url:
@@ -88,17 +90,12 @@
       key: https://rpm.rancher.io/public.key
       state: present
 
-  - name: Install rke2 selinux rpm (rhel 7)
-    ansible.builtin.yum:
-      name:  /opt/rke2/rke2-selinux-v{{ rke2_selinux_version }}.rpm
-      state: present
-    when: ansible_distribution_major_version == '7'
 
-  - name: Install rke2 selinux rpm (rhel 8)
-    ansible.builtin.dnf:
-      name:  /opt/rke2/rke2-selinux-v{{ rke2_selinux_version }}.rpm
-      state: present
-    when: ansible_distribution_major_version == '8'
+  #- name: Install rke2 selinux rpm (rhel 8)
+  #  ansible.builtin.dnf:
+  #    name:  /opt/rke2/rke2-selinux-v{{ rke2_selinux_version }}.rpm
+  #    state: present
+  #  when: ansible_distribution_major_version == '8'
 
   - block:
 
